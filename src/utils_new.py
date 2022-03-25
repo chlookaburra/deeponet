@@ -8,7 +8,7 @@ from functools import wraps
 
 import numpy as np
 
-# ORIGINAL VERSION WITHOUT CHLOE EDITS
+# EDITED BY CHLOE
 
 
 def timing(f):
@@ -53,9 +53,15 @@ def safe_test(model, data, X_test, y_test, fname=None):
 
     y_pred = []
     X = X_test
+    nn = "opnn" # ADDED BY CHLOE
     while is_nonempty(X):
         X_add, X = trim_to_65535(X)
-        y_pred.append(model.predict(data.transform_inputs(X_add)))
+        # EDITED BY CHLOE
+        # y_pred.append(model.predict(data.transform_inputs(X_add)))
+        if nn == "opnn":
+            y_pred.append(model.predict(X_add))
+        else:
+            y_pred.append(model.predict(data.transform_inputs(X_add)))
     y_pred = np.vstack(y_pred)
     error = np.mean((y_test - y_pred) ** 2)
     print("Test MSE: {}".format(error))

@@ -12,12 +12,12 @@ def solve_CVC(xmin, xmax, tmin, tmax, f, g, V, Nx, Nt):
     """
 
     # Case I: Analytical solution for a(x)=1, u(x,0)=V(x)    (V,V' periodic)
-    x = np.linspace(xmin, xmax, Nx)
-    t = np.linspace(tmin, tmax, Nt)
-    u = V((x[:, None] - t) % 1)
+    # x = np.linspace(xmin, xmax, Nx)
+    # t = np.linspace(tmin, tmax, Nt)
+    # u = V((x[:, None] - t) % 1)
 
     # Case II: Wendroff for a(x)=1, u(x,0)=f(x), u(0,t)=g(t)    (f(0)=g(0))
-    """
+    
     x = np.linspace(xmin, xmax, Nx)
     t = np.linspace(tmin, tmax, Nt)
     h = x[1] - x[0]
@@ -40,7 +40,7 @@ def solve_CVC(xmin, xmax, tmin, tmax, f, g, V, Nx, Nt):
         b = np.zeros(Nx - 1)
         b[0] = g(n * dt) - r * g((n + 1) * dt)
         u[1:, n + 1] = K @ (D @ u[1:, n] + b)
-    """
+    
 
     # Case III: Wendroff for a(x)=1+0.1*V(x), u(x,0)=f(x), u(0,t)=g(t)    (f(0)=g(0))
     """
@@ -97,6 +97,7 @@ def solve_CVC(xmin, xmax, tmin, tmax, f, g, V, Nx, Nt):
 
 def main():
     # Case I: Analytical solution for a(x)=1, u(x,0)=V(x)    (V,V' periodic)
+    """
     xmin, xmax = 0, 1
     tmin, tmax = 0, 1
     V = lambda x: np.sin(2 * np.pi * x)
@@ -110,9 +111,9 @@ def main():
 
     print(np.max(abs(u - u_true(x[:, None], t))))
     print(np.average(abs(u - u_true(x[:, None], t))))
+    """
 
     # Case II: Wendroff for a(x)=1, u(x,0)=V(x), u(0,t)=0    (V(0)=0)
-    """
     xmin, xmax = 0, 1
     tmin, tmax = 0, 1
     V = None
@@ -126,7 +127,6 @@ def main():
 
     print(np.max(abs(u - u_true(x[:, None], t))))
     print(np.average(abs(u - u_true(x[:, None], t))))
-    """
 
     # Case III: Wendroff for a(x)=1+0.1*V(x), u(x,0)=f(x), u(0,t)=g(t)    (f(0)=g(0))
     """
@@ -163,10 +163,41 @@ def main():
     print(np.max(abs(u - u_true(x[:, None], t))))
     print(np.average(abs(u - u_true(x[:, None], t))))
     """
+    
+    # plot the solver
+    # axis = plt.subplot(111)
+    # plt.imshow(u, cmap="rainbow", vmin=0)
+    # plt.colorbar()
+    # xlabel = [format(i, ".1f") for i in np.linspace(0, 1, num=11)]
+    # ylabel = [format(i, ".1f") for i in np.linspace(0, 1, num=11)]
+    # axis.set_xticks(range(0, 101, 10))
+    # axis.set_xticklabels(xlabel)
+    # axis.set_yticks(range(0, 101, 10))
+    # axis.set_yticklabels(ylabel)
+    # axis.set_xlabel("t")
+    # axis.set_ylabel("x")
+    # axis.set_title(r"Solver solution", fontdict={"fontsize": 30}, loc="left")
+    # plt.show()
+    
+    # plot the actual (chloe)
+    # u_true = u_true(x[:, None], t)
+    # axis = plt.subplot(111)
+    # plt.imshow(u_true, cmap="rainbow", vmin=0)
+    # plt.colorbar()
+    # xlabel = [format(i, ".1f") for i in np.linspace(0, 1, num=11)]
+    # ylabel = [format(i, ".1f") for i in np.linspace(0, 1, num=11)]
+    # axis.set_xticks(range(0, 101, 10))
+    # axis.set_xticklabels(xlabel)
+    # axis.set_yticks(range(0, 101, 10))
+    # axis.set_yticklabels(ylabel)
+    # axis.set_xlabel("t")
+    # axis.set_ylabel("x")
+    # axis.set_title(r"Actual solution", fontdict={"fontsize": 30}, loc="left")
+    # plt.show()
 
-    # plot
-    u_true = u_true(x[:, None], t)
-    error = abs(u - u_true)
+    # plot the error (original)
+    #u_true = u_true(x[:, None], t)
+    error = abs(u - u_true(x[:, None], t))
     axis = plt.subplot(111)
     plt.imshow(error, cmap="rainbow", vmin=0)
     plt.colorbar()

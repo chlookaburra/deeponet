@@ -7,6 +7,7 @@ from pathos.pools import ProcessPool
 from scipy import interpolate
 from scipy.integrate import solve_ivp
 from scipy.special import legendre
+import matplotlib.pyplot as plt
 
 import config
 from ADR_solver import solve_ADR
@@ -205,7 +206,8 @@ class CVCSystem(object):
     def eval_s(self, sensor_value):
         """Compute s(x, t) over m * Nt points for a `sensor_value` of `u`.
         """
-        # Case I: Analytical solution for a(x)=1, u(x,0)=V(x)    (V,V' periodic)
+        # Case I: Analytical solution for a(x)=1, u(x,0)=V(x)    (V,V' periodic)        
+        """
         return solve_CVC(
             0,
             1,
@@ -219,8 +221,10 @@ class CVCSystem(object):
             len(sensor_value),
             self.Nt,
         )[2]
-        # Case II: Wendroff for a(x)=1, u(x,0)=f(x), u(0,t)=g(t)    (f(0)=g(0))
         """
+    
+        # Case II: Wendroff for a(x)=1, u(x,0)=f(x), u(0,t)=g(t)    (f(0)=g(0))
+        
         return solve_CVC(
             0,
             1,
@@ -232,7 +236,7 @@ class CVCSystem(object):
             len(sensor_value),
             self.Nt,
         )[2]
-        """
+        
         # Case III: Wendroff for a(x)=1+0.1*V(x), u(x,0)=f(x), u(0,t)=g(t)    (f(0)=g(0))
         """
         return solve_CVC(
@@ -261,7 +265,6 @@ class CVCSystem(object):
             self.Nt,
         )[2]
         """
-
 
 class ADVDSystem(object):
     def __init__(self, f, g, T, Nt, npoints_output):

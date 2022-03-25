@@ -6,6 +6,7 @@ import itertools
 
 import numpy as np
 import tensorflow as tf
+import matplotlib as plt
 
 import deepxde as dde
 from spaces import FinitePowerSeries, FiniteChebyshev, GRF
@@ -23,11 +24,21 @@ def test_u_lt(nn, system, T, m, model, data, u, fname):
     y_test = s
     if nn != "opnn":
         X_test = merge_values(X_test)
-    y_pred = model.predict(data.transform_inputs(X_test))
+        # CHLOE - TESTING TO SEE IF THIS WORKS
+        y_pred = model.predict(data.transform_inputs(X_test))
+    else:
+        y_pred = model.predict(X_test)
+    #y_pred = model.predict(data.transform_inputs(X_test))
     np.savetxt("test/u_" + fname, sensor_value)
     np.savetxt("test/s_" + fname, np.hstack((ns, y_test, y_pred)))
 
-
+# NN sees sensors - determining where they are nplinspace
+# sensors t, function u(t)
+# time t and space x (t could always be space)
+# Xtest - tile (replicate) all of the sensor values many number of times
+# cos --> replicate 100 times
+# Ytest - that function queried at a 100 times over that space - train/test data
+# Xtest input, Ytest result
 def test_u_ode(nn, system, T, m, model, data, u, fname, num=100):
     """Test ODE"""
     sensors = np.linspace(0, T, num=m)[:, None]
@@ -37,7 +48,11 @@ def test_u_ode(nn, system, T, m, model, data, u, fname, num=100):
     y_test = system.eval_s_func(u, x)
     if nn != "opnn":
         X_test = merge_values(X_test)
-    y_pred = model.predict(data.transform_inputs(X_test))
+        # CHLOE - TESTING TO SEE IF THIS WORKS
+        y_pred = model.predict(data.transform_inputs(X_test))
+    else:
+        y_pred = model.predict(X_test)
+    #y_pred = model.predict(data.transform_inputs(X_test))
     np.savetxt(fname, np.hstack((x, y_test, y_pred)))
     print("L2relative error:", dde.metrics.l2_relative_error(y_test, y_pred))
 
@@ -53,7 +68,11 @@ def test_u_dr(nn, system, T, m, model, data, u, fname):
     y_test = s.reshape([m * system.Nt, 1])
     if nn != "opnn":
         X_test = merge_values(X_test)
-    y_pred = model.predict(data.transform_inputs(X_test))
+        # CHLOE - TESTING TO SEE IF THIS WORKS
+        y_pred = model.predict(data.transform_inputs(X_test))
+    else:
+        y_pred = model.predict(X_test)
+    #y_pred = model.predict(data.transform_inputs(X_test))
     np.savetxt(fname, np.hstack((xt, y_test, y_pred)))
 
 
@@ -68,7 +87,11 @@ def test_u_cvc(nn, system, T, m, model, data, u, fname):
     y_test = s.reshape([m * system.Nt, 1])
     if nn != "opnn":
         X_test = merge_values(X_test)
-    y_pred = model.predict(data.transform_inputs(X_test))
+        # CHLOE - TESTING TO SEE IF THIS WORKS
+        y_pred = model.predict(data.transform_inputs(X_test))
+    else:
+        y_pred = model.predict(X_test)
+    # y_pred = model.predict(data.transform_inputs(X_test))
     np.savetxt("test/u_" + fname, sensor_value)
     np.savetxt("test/s_" + fname, np.hstack((xt, y_test, y_pred)))
 
@@ -84,7 +107,11 @@ def test_u_advd(nn, system, T, m, model, data, u, fname):
     y_test = s.reshape([m * system.Nt, 1])
     if nn != "opnn":
         X_test = merge_values(X_test)
-    y_pred = model.predict(data.transform_inputs(X_test))
+        # CHLOE - TESTING TO SEE IF THIS WORKS
+        y_pred = model.predict(data.transform_inputs(X_test))
+    else:
+        y_pred = model.predict(X_test)
+    #y_pred = model.predict(data.transform_inputs(X_test))
     np.savetxt("test/u_" + fname, sensor_value)
     np.savetxt("test/s_" + fname, np.hstack((xt, y_test, y_pred)))
 
@@ -156,7 +183,8 @@ def run(problem, system, space, T, m, nn, net, lr, epochs, num_train, num_test):
     X_test_trim = trim_to_65535(X_test)[0]
     y_test_trim = trim_to_65535(y_test)[0]
     if nn == "opnn":
-        data = dde.data.OpDataSet(
+        # ADDED BY CHLOE: OpDataSet to Triple
+        data = dde.data.Triple(
             X_train=X_train, y_train=y_train, X_test=X_test_trim, y_test=y_test_trim
         )
     else:
@@ -170,18 +198,31 @@ def run(problem, system, space, T, m, nn, net, lr, epochs, num_train, num_test):
         "model/model.ckpt", save_better_only=True, period=1000
     )
     losshistory, train_state = model.train(epochs=epochs, callbacks=[checker])
-    print("# Parameters:", np.sum([np.prod(v.get_shape().as_list()) for v in tf.trainable_variables()]))
-
+    # print("# Parameters:", np.sum([np.prod(v.get_shape().as_list()) for v in tf.trainable_variables()]))
+    #print("# Parameters:", np.sum([np.prod(v.get_shape().as_list()) for v in tf.Variable(trainable=True)]))
+    print("# Parameters:", np.sum([np.prod(v.get_shape().as_list()) for v in tf.compat.v1.trainable_variables()]))
     dde.saveplot(losshistory, train_state, issave=True, isplot=True)
 
-    model.restore("model/model.ckpt-" + str(train_state.best_step), verbose=1)
+    # ADDED BY CHLOE: TRYING TO SEE IF THIS WORKS
+    #model.restore("model/model.ckpt-" + str(train_state.best_step), verbose=1)
+    model.restore("model/model.ckpt-" + str(train_state.best_step) + ".ckpt", verbose=1)
+
+    print("Rows of X_train = " + str(len(X_train)))
+    print("Columns of X_train = " + str(len(X_train[0])))
+    print("Rows of y_train = " + str(len(y_train)))
+    print("Columns of y_train = " + str(len(y_train[0])))
+
+    plt.pyplot.plot(np.array(X_train[0][:]), y_train)    
+    plt.pyplot.plot(np.array(X_train[1][:]), y_train)
+    plt.pyplot.show()
+    
     safe_test(model, data, X_test, y_test)
 
     tests = [
         (lambda x: x, "x.dat"),
-        (lambda x: np.sin(np.pi * x), "sinx.dat"),
-        (lambda x: np.sin(2 * np.pi * x), "sin2x.dat"),
-        (lambda x: x * np.sin(2 * np.pi * x), "xsin2x.dat"),
+        #(lambda x: np.sin(np.pi * x), "sinx.dat"),
+        #(lambda x: np.sin(2 * np.pi * x), "sin2x.dat"),
+        #(lambda x: x * np.sin(2 * np.pi * x), "xsin2x.dat"),
     ]
     for u, fname in tests:
         if problem == "lt":
@@ -221,6 +262,15 @@ def run(problem, system, space, T, m, nn, net, lr, epochs, num_train, num_test):
         for i in range(u.shape[0]):
             test_u_advd(nn, system, T, m, model, data, lambda x: u[i], str(i) + ".dat")
 
+    print("Rows of X_test = " + str(len(X_test)))
+    print("Columns of X_test = " + str(len(X_test[0])))
+    print("Rows of y_train = " + str(len(y_test)))
+    print("Columns of y_train = " + str(len(y_test[0])))
+
+    plt.pyplot.plot(np.array(X_test[0][:]), y_test)    
+    plt.pyplot.plot(np.array(X_test[1][:]), y_test)
+    plt.pyplot.show()
+   
 
 def main():
     # Problems:
@@ -255,10 +305,10 @@ def main():
 
     # Hyperparameters
     m = 100
-    num_train = 10000
-    num_test = 100000
+    num_train = 1000 # 10000
+    num_test = 100 # 100000, proof: test > train
     lr = 0.001
-    epochs = 50000
+    epochs = 1000 # 50000 originally, how many times iterate model
 
     # Network
     nn = "opnn"
@@ -266,9 +316,12 @@ def main():
     initializer = "Glorot normal"  # "He normal" or "Glorot normal"
     dim_x = 1 if problem in ["ode", "lt"] else 2
     if nn == "opnn":
-        net = dde.maps.OpNN(
-            [m, 40, 40],
-            [dim_x, 40, 40],
+        num_neurons = 40
+        num_layers = 40
+        
+        net = dde.maps.DeepONet(
+            [m, num_neurons, num_layers],
+            [dim_x, num_neurons, num_layers],
             activation,
             initializer,
             use_bias=True,
@@ -283,4 +336,6 @@ def main():
 
 
 if __name__ == "__main__":
+    # ADDED BY CHLOE: line specifying __spec__
+    __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
     main()
