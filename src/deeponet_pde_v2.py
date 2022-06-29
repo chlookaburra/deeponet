@@ -11,8 +11,10 @@ import matplotlib as plt
 import deepxde as dde
 from spaces import FinitePowerSeries, FiniteChebyshev, GRF
 from system import LTSystem, ODESystem, DRSystem, CVCSystem, ADVDSystem
-from utils import merge_values, trim_to_65535, mean_squared_error_outlier, safe_test
+# new utils file
+from utils_new import merge_values, trim_to_65535, mean_squared_error_outlier, safe_test
 
+# USING THE LATEST DEEPONET CODE
 
 def test_u_lt(nn, system, T, m, model, data, u, fname):
     """Test Legendre transform"""
@@ -51,10 +53,35 @@ def test_u_ode(nn, system, T, m, model, data, u, fname, num=100):
         # CHLOE - TESTING TO SEE IF THIS WORKS
         y_pred = model.predict(data.transform_inputs(X_test))
     else:
+        X_test = merge_values(X_test)
         y_pred = model.predict(X_test)
-    #y_pred = model.predict(data.transform_inputs(X_test))
+    # y_pred = model.predict(data.transform_inputs(X_test))
     np.savetxt(fname, np.hstack((x, y_test, y_pred)))
     print("L2relative error:", dde.metrics.l2_relative_error(y_test, y_pred))
+    
+    # PLOTTING TEST CASES ----------------------------------------------
+    # test case 1
+    y_an = 0.5*x**2;
+    
+    # test case 2
+    # analytical needs to be shifted up s.t. y starts from 0
+    #y_an = -np.cos(2*np.pi * x)/np.pi/2 + 1/2/np.pi
+    
+    plt.plot(x,y_an,'b')
+    plt.plot(x,y_test,'r--')
+    
+    plt.xlabel('x') 
+    plt.ylabel('ytest') 
+    plt.title("ode: x vs. ytest")
+    plt.legend(['Analytical','DeepONet'])
+    plt.show()
+    
+    plt.plot(x,abs(y_test-y_an))
+    plt.xlabel('x')
+    plt.ylabel('ytest - y_an')
+    plt.title("ode: x vs. error")
+    plt.show()
+    # -----------------------------------------------------------------
 
 
 def test_u_dr(nn, system, T, m, model, data, u, fname):
@@ -94,6 +121,83 @@ def test_u_cvc(nn, system, T, m, model, data, u, fname):
     # y_pred = model.predict(data.transform_inputs(X_test))
     np.savetxt("test/u_" + fname, sensor_value)
     np.savetxt("test/s_" + fname, np.hstack((xt, y_test, y_pred)))
+    
+    # PLOTTING TEST CASES ----------------------------------------------    
+    plt.plot(xt[:,0],y_pred)
+    plt.xlabel('x0') 
+    plt.ylabel('ypred') 
+    plt.title("Advection: x vs. ypred")
+    plt.show()
+    # -----------------------------------------------------------------
+    
+    # plot the solver
+    axis = plt.subplot(111)
+    plt.imshow(s, cmap="rainbow", vmin=0)
+    plt.colorbar()
+    xlabel = [format(i, ".1f") for i in np.linspace(0, 1, num=11)]
+    ylabel = [format(i, ".1f") for i in np.linspace(0, 1, num=11)]
+    axis.set_xticks(range(0, 101, 10))
+    axis.set_xticklabels(xlabel)
+    axis.set_yticks(range(0, 101, 10))
+    axis.set_yticklabels(ylabel)
+    axis.set_xlabel("t")
+    axis.set_ylabel("x")
+    axis.set_title(r"Solver solution", fontdict={"fontsize": 30}, loc="left")
+    plt.show()
+    
+    # plot the actual (chloe)
+    x = np.linspace(0, 1, m)
+    t = np.linspace(0, 1, m)
+    # Case 1
+    V = lambda x: np.sin(2 * np.pi * x)
+    u_true = lambda x, t: V(x - t)
+    u_true = u_true(x[:, None], t)
+    plt.imshow(u_true, cmap="rainbow", vmin=0)
+    plt.colorbar()
+    xlabel = [format(i, ".1f") for i in np.linspace(0, 1, num=11)]
+    ylabel = [format(i, ".1f") for i in np.linspace(0, 1, num=11)]
+    axis.set_xticks(range(0, 101, 10))
+    axis.set_xticklabels(xlabel)
+    axis.set_yticks(range(0, 101, 10))
+    axis.set_yticklabels(ylabel)
+    axis.set_xlabel("t")
+    axis.set_ylabel("x")
+    axis.set_title(r"Actual solution", fontdict={"fontsize": 30}, loc="left")
+    plt.show()
+    
+    # Case 2
+    # u_true = lambda x, t: (2 * np.pi * (x - t)) ** 5
+    # u_true = u_true(x[:, None], t)
+    # axis = plt.subplot(111)
+    # plt.imshow(u_true, cmap="rainbow", vmin=0)
+    # plt.colorbar()
+    # xlabel = [format(i, ".1f") for i in np.linspace(0, 1, num=11)]
+    # ylabel = [format(i, ".1f") for i in np.linspace(0, 1, num=11)]
+    # axis.set_xticks(range(0, 101, 10))
+    # axis.set_xticklabels(xlabel)
+    # axis.set_yticks(range(0, 101, 10))
+    # axis.set_yticklabels(ylabel)
+    # axis.set_xlabel("t")
+    # axis.set_ylabel("x")
+    # axis.set_title(r"Actual solution", fontdict={"fontsize": 30}, loc="left")
+    # plt.show()
+
+    # plot the error (original)
+    # error = abs(s - u_true)
+    # axis = plt.subplot(111)
+    # plt.imshow(error, cmap="rainbow", vmin=0)
+    # plt.colorbar()
+    # xlabel = [format(i, ".1f") for i in np.linspace(0, 1, num=11)]
+    # ylabel = [format(i, ".1f") for i in np.linspace(0, 1, num=11)]
+    # axis.set_xticks(range(0, 101, 10))
+    # axis.set_xticklabels(xlabel)
+    # axis.set_yticks(range(0, 101, 10))
+    # axis.set_yticklabels(ylabel)
+    # axis.set_xlabel("t")
+    # axis.set_ylabel("x")
+    # axis.set_title(r"Error", fontdict={"fontsize": 30}, loc="left")
+    # plt.show()
+
 
 
 def test_u_advd(nn, system, T, m, model, data, u, fname):
@@ -207,14 +311,6 @@ def run(problem, system, space, T, m, nn, net, lr, epochs, num_train, num_test):
     #model.restore("model/model.ckpt-" + str(train_state.best_step), verbose=1)
     model.restore("model/model.ckpt-" + str(train_state.best_step) + ".ckpt", verbose=1)
 
-    print("Rows of X_train = " + str(len(X_train)))
-    print("Columns of X_train = " + str(len(X_train[0])))
-    print("Rows of y_train = " + str(len(y_train)))
-    print("Columns of y_train = " + str(len(y_train[0])))
-
-    plt.pyplot.plot(np.array(X_train[0][:]), y_train)    
-    plt.pyplot.plot(np.array(X_train[1][:]), y_train)
-    plt.pyplot.show()
     
     safe_test(model, data, X_test, y_test)
 
@@ -261,15 +357,6 @@ def run(problem, system, space, T, m, nn, net, lr, epochs, num_train, num_test):
         u = space.eval_u(features, np.sin(np.pi * sensors) ** 2)
         for i in range(u.shape[0]):
             test_u_advd(nn, system, T, m, model, data, lambda x: u[i], str(i) + ".dat")
-
-    print("Rows of X_test = " + str(len(X_test)))
-    print("Columns of X_test = " + str(len(X_test[0])))
-    print("Rows of y_train = " + str(len(y_test)))
-    print("Columns of y_train = " + str(len(y_test[0])))
-
-    plt.pyplot.plot(np.array(X_test[0][:]), y_test)    
-    plt.pyplot.plot(np.array(X_test[1][:]), y_test)
-    plt.pyplot.show()
    
 
 def main():
